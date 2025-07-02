@@ -7,7 +7,7 @@ import com.example.RateLimitedURLShortener.Service.URLService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,12 +16,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
+import java.net.URI;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import jakarta.persistence.EntityNotFoundException;
+import java.net.URI;
 
 @RestController
 @RequestMapping(value = "/api")
 public class UrlController {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(UrlController.class);
     private final URLService urlService;
     private final String domain ;
@@ -35,7 +40,7 @@ public class UrlController {
     public ResponseEntity<ShortenResponse> shortenUrl(@Valid @RequestBody ShortenRequest request){
 
         UrlMapping mapping=urlService.shortenUrl(request.getUrl());
-        String shortUrl = String.format("%s/%s",domain , mapping.getCode());
+        String shortUrl = String.format("%s/api/%s",domain , mapping.getCode());
         ShortenResponse response = new ShortenResponse(mapping.getCode(),shortUrl);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -50,10 +55,16 @@ public class UrlController {
             }
     )
     @GetMapping(value = "/{code}")
-    public void redirectUrl(@PathVariable String code, HttpServletResponse response) throws IOException {
-        UrlMapping mapping=urlService.getByCode(code);
-        logger.info("Original url: " +mapping.getOriginalUrl());
-        response.sendRedirect(mapping.getOriginalUrl());
+    public ResponseEntity<Void> redirectUrl(@PathVariable String code) {
+        try {
+            UrlMapping mapping = urlService.getByCode(code);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setLocation(URI.create(mapping.getOriginalUrl()));
+            return ResponseEntity.status(HttpStatus.FOUND).headers(headers).build();
+        } catch (EntityNotFoundException ex) {
+            System.out.println("Not found code");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
 

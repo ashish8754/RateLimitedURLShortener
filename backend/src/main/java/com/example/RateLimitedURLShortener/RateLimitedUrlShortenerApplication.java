@@ -14,7 +14,7 @@ public class RateLimitedUrlShortenerApplication {
 	}
 
 	@Bean
-	CommandLineRunner redisTest(StringRedisTemplate redisTemplate) {
+	public CommandLineRunner redisTest(StringRedisTemplate redisTemplate) {
 		return args ->{
 			String pong = redisTemplate.getConnectionFactory().getConnection().ping();
 			System.out.println("Redis response" + pong);

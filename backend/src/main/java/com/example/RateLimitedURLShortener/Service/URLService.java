@@ -33,7 +33,7 @@ public class URLService {
 
     public UrlMapping getByCode(String code){
         return urlMappingRepository.findByCode(code)
-                .orElseThrow(() -> new EntityNotFoundException("No url mapping found for given code"+code));
+                .orElseThrow(() -> new EntityNotFoundException("No url mapping found for given code: "+code));
     }
 
     public String generateRandomCode(int length){
